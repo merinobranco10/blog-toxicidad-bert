@@ -24,7 +24,7 @@ comentario es analizado por un modelo BERT **antes de publicarse**:
 | Aspecto | Detalle |
 |---|---|
 | Dataset | [Civil Comments](https://huggingface.co/datasets/google/civil_comments) (`google/civil_comments`) |
-| Licencia | **COMPLETAR** según la ficha del dataset en Hugging Face |
+| Licencia | CC0 1.0 según la ficha del dataset en Hugging Face (consultada el 08-11-2026)|
 | Muestra | 50.000 filas del split `train` (semilla 42) |
 | Etiqueta | `toxico = 1` si `toxicity >= 0.5` (decisión del equipo, no oficial) |
 | Limpieza | Sin vacíos ni inválidos; 75 textos repetidos eliminados → 49.925 filas (92,09 % no tóxicos / 7,91 % tóxicos) |
