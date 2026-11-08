@@ -2,7 +2,7 @@ import os, re
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-MODEL_ID = os.getenv("MODEL_ID", "bmerino10/bert-toxicidad-civil-comments")
+MODEL_ID = os.getenv("MODEL_ID", "bmerino10/vigia-bert-toxicidad")
 MAX_LENGTH, UMBRAL = 256, 0.5
 MIN_CAR, MAX_CAR = 3, 5000
 ID_TOXICO = 1
