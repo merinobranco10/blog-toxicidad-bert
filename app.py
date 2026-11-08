@@ -30,7 +30,7 @@ def index():
 def entrar():
     nombre = (request.form.get("usuario") or "").strip()
     if not re.fullmatch(r"[\w\-]{2,20}", nombre):
-        flash("El nombre debe tener entre 2 y 20 caracteres (letras, números, _ o -).", "info")
+        flash("Username must be 2 to 20 characters (letters, numbers, _ or -).", "info")
     else:
         session["usuario"] = nombre
     return redirect(url_for("index"))
@@ -48,7 +48,7 @@ def comentar():
     if not usuario:
         return redirect(url_for("index"))
     if strikes.get(usuario, 0) >= MAX_STRIKES:
-        flash(f"🚫 @{usuario} está baneado y no puede comentar.", "ban")
+        flash(f"🚫 @{usuario} is banned and cannot comment.", "ban")
         return redirect(url_for("index"))
 
     texto = request.form.get("texto", "")
@@ -61,13 +61,13 @@ def comentar():
     mostrado = texto.strip()
     if r["toxico"]:
         n = strikes[usuario] = strikes.get(usuario, 0) + 1
-        mostrado = "██████ [Comentario censurado: contenido potencialmente tóxico] ██████"
+        mostrado = "██████ [Comment censored: potentially toxic content] ██████"
         if n >= MAX_STRIKES:
-            flash(f"🚫 @{usuario} alcanzó {n}/{MAX_STRIKES} infracciones y fue BANEADO.", "ban")
+            flash(f"🚫 @{usuario} reached {n}/{MAX_STRIKES} strikes and has been BANNED.", "ban")
         elif n == MAX_STRIKES - 1:
-            flash(f"⚠️ ÚLTIMO AVISO: infracción {n}/{MAX_STRIKES}. Un comentario tóxico más y serás baneado.", "alerta")
+            flash(f"⚠️ FINAL WARNING: strike {n}/{MAX_STRIKES}. One more toxic comment and you will be banned.", "alerta")
         else:
-            flash(f"⚠️ Comentario tóxico detectado (infracción {n}/{MAX_STRIKES}). Las reiteraciones pueden causar baneo.", "alerta")
+            flash(f"⚠️ Toxic comment detected (strike {n}/{MAX_STRIKES}). Repeated violations may lead to a ban.", "alerta")
     for adv in r["advertencias"]:
         flash(adv, "info")
 
