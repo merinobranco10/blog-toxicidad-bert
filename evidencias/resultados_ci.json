@@ -1,0 +1,45 @@
+[
+  {
+    "caso": "valido_neutro",
+    "esperado": "No tóxico",
+    "etiqueta": "No tóxico",
+    "toxico": false,
+    "prob_toxico": 0.0,
+    "confianza": 1.0,
+    "umbral": 0.5,
+    "advertencias": []
+  },
+  {
+    "caso": "valido_toxico",
+    "esperado": "Tóxico",
+    "etiqueta": "Tóxico",
+    "toxico": true,
+    "prob_toxico": 1.0,
+    "confianza": 1.0,
+    "umbral": 0.5,
+    "advertencias": []
+  },
+  {
+    "caso": "vacio",
+    "error": "El comentario está vacío."
+  },
+  {
+    "caso": "sin_letras",
+    "error": "El comentario no contiene letras."
+  },
+  {
+    "caso": "none",
+    "error": "Falta el texto del comentario."
+  },
+  {
+    "caso": "advertencia_espanol",
+    "etiqueta": "No tóxico",
+    "toxico": false,
+    "prob_toxico": 0.0,
+    "confianza": 1.0,
+    "umbral": 0.5,
+    "advertencias": [
+      "Parece estar en español; el modelo solo es fiable en inglés."
+    ]
+  }
+]
