@@ -1,44 +1,81 @@
+import os, re
 from datetime import datetime
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 import moderador
 
-app = Flask(__name__)
-MAX_STRIKES = 3
-comentarios = []   # en memoria (no se guardan datos personales)
-strikes = {}
+try:
+    from zoneinfo import ZoneInfo
+    TZ = ZoneInfo("America/Santiago")
+except Exception:
+    TZ = None
 
-@app.route("/", methods=["GET", "POST"])
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "clave-local-de-demostracion")
+
+MAX_STRIKES = 3
+comentarios = []   # en memoria: no se guardan datos personales
+strikes = {}       # infracciones por usuario (se pierden al reiniciar)
+
+
+@app.route("/")
 def index():
-    aviso = error = None
-    if request.method == "POST":
-        usuario = (request.form.get("usuario") or "anónimo").strip()[:30]
-        texto = request.form.get("texto", "")
-        if strikes.get(usuario, 0) >= MAX_STRIKES:
-            error = f"@{usuario} está baneado (simulado) y no puede comentar."
+    usuario = session.get("usuario")
+    baneado = bool(usuario) and strikes.get(usuario, 0) >= MAX_STRIKES
+    return render_template("index.html", usuario=usuario, baneado=baneado,
+                           comentarios=comentarios, strikes=strikes,
+                           max_strikes=MAX_STRIKES)
+
+
+@app.route("/entrar", methods=["POST"])
+def entrar():
+    nombre = (request.form.get("usuario") or "").strip()
+    if not re.fullmatch(r"[\w\-]{2,20}", nombre):
+        flash("El nombre debe tener entre 2 y 20 caracteres (letras, números, _ o -).", "info")
+    else:
+        session["usuario"] = nombre
+    return redirect(url_for("index"))
+
+
+@app.route("/salir", methods=["POST"])
+def salir():
+    session.pop("usuario", None)
+    return redirect(url_for("index"))
+
+
+@app.route("/comentar", methods=["POST"])
+def comentar():
+    usuario = session.get("usuario")
+    if not usuario:
+        return redirect(url_for("index"))
+    if strikes.get(usuario, 0) >= MAX_STRIKES:
+        flash(f"🚫 @{usuario} está baneado y no puede comentar.", "ban")
+        return redirect(url_for("index"))
+
+    texto = request.form.get("texto", "")
+    try:
+        r = moderador.predecir(texto)
+    except moderador.ErrorEntrada as e:
+        flash(str(e), "info")
+        return redirect(url_for("index"))
+
+    mostrado = texto.strip()
+    if r["toxico"]:
+        n = strikes[usuario] = strikes.get(usuario, 0) + 1
+        mostrado = "██████ [Comentario censurado: contenido potencialmente tóxico] ██████"
+        if n >= MAX_STRIKES:
+            flash(f"🚫 @{usuario} alcanzó {n}/{MAX_STRIKES} infracciones y fue BANEADO.", "ban")
+        elif n == MAX_STRIKES - 1:
+            flash(f"⚠️ ÚLTIMO AVISO: infracción {n}/{MAX_STRIKES}. Un comentario tóxico más y serás baneado.", "alerta")
         else:
-            try:
-                r = moderador.predecir(texto)
-            except moderador.ErrorEntrada as e:
-                error = str(e)
-            else:
-                mostrado = texto.strip()
-                if r["toxico"]:
-                    strikes[usuario] = strikes.get(usuario, 0) + 1
-                    n = strikes[usuario]
-                    mostrado = "██████ [Comentario censurado: contenido potencialmente tóxico] ██████"
-                    if n >= MAX_STRIKES:
-                        aviso = {"ban": True, "texto": f"🚫 @{usuario} alcanzó {n}/{MAX_STRIKES} infracciones: BANEADO (simulado)."}
-                    elif n == MAX_STRIKES - 1:
-                        aviso = {"ban": False, "texto": f"⚠️ ALERTA: infracción {n}/{MAX_STRIKES}. Un comentario tóxico más y @{usuario} será baneado."}
-                    else:
-                        aviso = {"ban": False, "texto": f"⚠️ Comentario tóxico detectado (infracción {n}/{MAX_STRIKES}). Las reiteraciones pueden causar baneo."}
-                if r["advertencias"]:
-                    error = " ".join(r["advertencias"])
-                comentarios.append({"usuario": usuario, "mostrado": mostrado, "analisis": r,
-                                    "toxico": r["toxico"], "hora": datetime.now().strftime("%H:%M:%S")})
-    return render_template("index.html", comentarios=comentarios, aviso=aviso, error=error,
-                           strikes=strikes, max_strikes=MAX_STRIKES)
+            flash(f"⚠️ Comentario tóxico detectado (infracción {n}/{MAX_STRIKES}). Las reiteraciones pueden causar baneo.", "alerta")
+    for adv in r["advertencias"]:
+        flash(adv, "info")
+
+    comentarios.append({"usuario": usuario, "mostrado": mostrado, "analisis": r,
+                        "toxico": r["toxico"], "hora": datetime.now(TZ).strftime("%H:%M:%S")})
+    return redirect(url_for("index"))
+
 
 if __name__ == "__main__":
-    moderador.cargar()                      # carga el modelo al arrancar
+    moderador.cargar()                       # carga BERT al arrancar
     app.run(host="0.0.0.0", port=5000)
