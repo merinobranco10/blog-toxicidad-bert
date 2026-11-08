@@ -1,4 +1,4 @@
-# 🌸 Senpai Notes: blog con moderación automática de comentarios (BERT)
+# 🌸 AnimeGenZ: blog con moderación automática de comentarios (BERT)
 
 Prototipo funcional del Proyecto Integrador de *Desarrollo de Soluciones Inteligentes*
 (Universidad Bernardo O'Higgins, 2026-S2, paralelo D03).
