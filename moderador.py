@@ -29,25 +29,25 @@ def cargar():
 
 def validar(texto):
     if texto is None:
-        raise ErrorEntrada("Falta el texto del comentario.")
+        raise ErrorEntrada("The comment text is missing.")
     if not isinstance(texto, str):
-        raise ErrorEntrada("El comentario debe ser texto.")
+        raise ErrorEntrada("The comment must be text.")
     t = texto.strip()
     if not t:
-        raise ErrorEntrada("El comentario está vacío.")
+        raise ErrorEntrada("The comment is empty.")
     if len(t) < MIN_CAR:
-        raise ErrorEntrada(f"Comentario demasiado corto (mínimo {MIN_CAR} caracteres).")
+        raise ErrorEntrada(f"Comment too short (minimum {MIN_CAR} characters).")
     if len(t) > MAX_CAR:
-        raise ErrorEntrada(f"Comentario demasiado largo (máximo {MAX_CAR} caracteres).")
+        raise ErrorEntrada(f"Comment too long (maximum {MAX_CAR} characters).")
     if not re.search(r"[A-Za-zÁÉÍÓÚáéíóúÑñ]", t):
-        raise ErrorEntrada("El comentario no contiene letras.")
+        raise ErrorEntrada("The comment contains no letters.")
     adv = []
     palabras = re.findall(r"\w+", t.lower())
     if sum(p in PALABRAS_ES for p in palabras) >= 2:
-        adv.append("Parece estar en español; el modelo solo es fiable en inglés.")
+        adv.append("This looks like Spanish; the moderator only works reliably in English.")
     tok, _ = cargar()
     if len(tok(t, truncation=False)["input_ids"]) > MAX_LENGTH:
-        adv.append(f"Texto largo: se trunca a {MAX_LENGTH} tokens.")
+        adv.append(f"Long text: it will be truncated to {MAX_LENGTH} tokens.")
     return t, adv
 
 @torch.no_grad()
