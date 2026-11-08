@@ -1,34 +1,89 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><title>Blog Vigía</title>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnimeGenZ</title>
 <style>
- body{font-family:system-ui;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222}
- .c{border:1px solid #ddd;border-radius:8px;padding:.8rem;margin:.6rem 0}
- .tox{border-color:#c0392b;background:#fdecea}
- .alerta{background:#fff3cd;border:1px solid #e0a800;padding:.8rem;border-radius:8px;margin:1rem 0}
- .ban{background:#f8d7da;border-color:#c0392b}
- small{color:#555} input,textarea{width:100%;margin:.3rem 0;padding:.4rem;box-sizing:border-box}
-</style></head><body>
-<h1>📰 Urban Voices</h1>
-<h2>Should cities ban cars from downtown?</h2>
-<p>Several European cities have restricted private cars in their centers to cut pollution and noise. Supporters say streets become safer and more lively; critics worry about local shops and accessibility. What do you think?</p>
-<hr><h3>Comments (write in English)</h3>
+ :root{--fondo:#c9ccd1;--tarjeta:#eceef0;--borde:#9da1a8;--texto:#23252a;--acento:#5b5f97}
+ body{font-family:system-ui,sans-serif;background:var(--fondo);color:var(--texto);margin:0}
+ .wrap{max-width:780px;margin:0 auto;padding:1.5rem 1rem 3rem}
+ header{background:#3a3d44;color:#f2f3f5;padding:1rem 1.2rem;border-radius:10px}
+ header h1{margin:0;font-size:1.8rem} header p{margin:.2rem 0 0;color:#c7c9ce}
+ .tarjeta{background:var(--tarjeta);border:1px solid var(--borde);border-radius:10px;padding:1rem;margin:1rem 0}
+ .barra{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+ .perfil{display:flex;align-items:center;gap:.6rem}
+ .avatar{width:38px;height:38px;border-radius:50%;background:#8b8f98;flex:none;display:block}
+ input,textarea{width:100%;padding:.55rem;margin:.3rem 0;box-sizing:border-box;border:1px solid var(--borde);border-radius:6px;background:#f7f8f9;font:inherit}
+ button{background:var(--acento);color:#fff;border:0;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font:inherit}
+ button.sec{background:#6f737b}
+ button:disabled,textarea:disabled{opacity:.5;cursor:not-allowed}
+ .aviso{border-radius:8px;padding:.7rem .9rem;margin:.6rem 0;border:1px solid}
+ .alerta{background:#fff1c2;border-color:#d9a400}
+ .ban{background:#f6c9cc;border-color:#b3262e;font-weight:600}
+ .info{background:#dbe4f3;border-color:#6d89bd}
+ .c{display:flex;gap:.7rem;background:var(--tarjeta);border:1px solid var(--borde);border-radius:10px;padding:.8rem;margin:.6rem 0}
+ .c.tox{border-color:#b3262e;background:#efd3d5}
+ .c p{margin:.3rem 0}.c small{color:#4b4e55}
+</style></head><body><div class="wrap">
 
-{% if aviso %}<div class="alerta {{ 'ban' if aviso.ban }}">{{ aviso.texto }}</div>{% endif %}
-{% if error %}<div class="alerta">ℹ️ {{ error }}</div>{% endif %}
+<header>
+  <h1>🌸 Senpai Notes</h1>
+  <p>The otaku corner where manga fights anime (but with respect)</p>
+</header>
 
-<form method="post">
-  <input name="usuario" placeholder="Usuario" required>
-  <textarea name="texto" rows="3" placeholder="Write a comment..."></textarea>
-  <button>Publicar</button>
-</form>
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, m in msgs %}<div class="aviso {{ cat }}">{{ m }}</div>{% endfor %}
+{% endwith %}
+
+{% if not usuario %}
+<div class="tarjeta">
+  <h2>Welcome, nakama! 👋</h2>
+  <p>Before joining the debate, tell us what you'd like to be called in the community.</p>
+  <form method="post" action="/entrar">
+    <input name="usuario" placeholder="Your username (e.g. luffy_fan)" maxlength="20" required autofocus>
+    <button>Enter the blog</button>
+  </form>
+</div>
+
+{% else %}
+<div class="tarjeta barra">
+  <div class="perfil">
+    <svg class="avatar" viewBox="0 0 40 40"><circle cx="20" cy="15" r="7" fill="#eceef0"/><path d="M5 38c1-9 7-13 15-13s14 4 15 13z" fill="#eceef0"/></svg>
+    <b>@{{ usuario }}</b>
+    {% if strikes.get(usuario, 0) > 0 %}<small>· strikes: {{ strikes[usuario] }}/{{ max_strikes }}</small>{% endif %}
+  </div>
+  <form method="post" action="/salir"><button class="sec">Change user</button></form>
+</div>
+
+<div class="tarjeta">
+  <h2>🔥 Is the manga always better than the anime?</h2>
+  <p>The debate is on! Some swear every panel is sacred; others say that without
+  an epic opening and a good fandub there is no life. And you, which side are you on?
+  Tell us below, but watch out: our AI moderator has hawk eyes and
+  does not forgive insults (¬_¬).</p>
+</div>
+
+<div class="tarjeta">
+  {% if baneado %}
+    <div class="aviso ban">🚫 You have been banned for repeated violations. You can no longer comment.</div>
+  {% endif %}
+  <form method="post" action="/comentar">
+    <textarea name="texto" rows="3" placeholder="Write your comment..." {{ 'disabled' if baneado }}></textarea>
+    <button {{ 'disabled' if baneado }}>Post</button>
+  </form>
+</div>
 
 {% for c in comentarios|reverse %}
 <div class="c {{ 'tox' if c.toxico }}">
-  <b>@{{ c.usuario }}</b> <small>{{ c.hora }}</small>
-  <p>{{ c.mostrado }}</p>
-  <small>🔎 Análisis: {{ c.analisis.etiqueta }} · prob. tóxico {{ '%.1f'|format(c.analisis.prob_toxico*100) }}%
-   · confianza {{ '%.1f'|format(c.analisis.confianza*100) }}% · umbral {{ c.analisis.umbral }}
-   {% if c.toxico %}· infracciones de @{{ c.usuario }}: {{ strikes[c.usuario] }}/{{ max_strikes }}{% endif %}</small>
+  <svg class="avatar" viewBox="0 0 40 40"><circle cx="20" cy="15" r="7" fill="#eceef0"/><path d="M5 38c1-9 7-13 15-13s14 4 15 13z" fill="#eceef0"/></svg>
+  <div>
+    <b>@{{ c.usuario }}</b> <small>{{ c.hora }}</small>
+    <p>{{ c.mostrado }}</p>
+    <small>🔎 Analysis: {{ 'Toxic' if c.toxico else 'Not toxic' }} · toxic prob. {{ '%.1f'|format(c.analisis.prob_toxico*100) }}%
+      · confidence {{ '%.1f'|format(c.analisis.confianza*100) }}% · threshold {{ c.analisis.umbral }}
+      {% if c.toxico %}· strikes for @{{ c.usuario }}: {{ strikes[c.usuario] }}/{{ max_strikes }}{% endif %}</small>
+  </div>
 </div>
 {% endfor %}
-</body></html>
+{% endif %}
+
+</div></body></html>
