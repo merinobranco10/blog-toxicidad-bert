@@ -2,7 +2,6 @@
   "name": "blog-toxicidad",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "postCreateCommand": "pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt",
-  "postAttachCommand": "python app.py",
   "forwardPorts": [5000],
   "portsAttributes": { "5000": { "label": "Blog", "onAutoForward": "openBrowser" } }
 }
